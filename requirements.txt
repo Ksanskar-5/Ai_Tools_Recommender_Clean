@@ -1,29 +1,18 @@
-# Backend framework
-fastapi==0.115.2
-uvicorn==0.30.1
+fastapi
+uvicorn[standard]
 
 # Data handling
-pandas==2.2.3
-numpy==1.26.4
+pandas
+numpy
 
 # Semantic search
-# Semantic search
-faiss-cpu==1.13.1
+faiss-cpu
 
-
-# Optional: For embeddings & LLM parsing
-sentence-transformers==3.2.1
-transformers==4.45.2
+# Embeddings
+sentence-transformers
+transformers
 
 # Utils
-scikit-learn==1.5.2
-python-dotenv==1.0.1
-
-# Optional but useful
-# Core ML + NLP
-
-numpy
-pandas
-
-
-requests        # if you want external API calls later
+scikit-learn
+python-dotenv
+requests
