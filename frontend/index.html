@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Tool Recommender</title>
+  <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-dark: #050510;
+    --bg-card: #0d0d1a;
+    --bg-modal: #12121f;
+    --primary-cyan: #00f0ff;
+    --primary-purple: #a855f7;
+    --primary-pink: #ec4899;
+    --text-primary: #ffffff;
+    --text-secondary: #b4b4c8;
+    --text-muted: #6b6b80;
+    --border-medium: rgba(0, 240, 255, 0.3);
+    --glass-light: rgba(255, 255, 255, 0.03);
+    --glass-hover: rgba(255, 255, 255, 0.1);
+    --glow-cyan: rgba(0, 240, 255, 0.4);
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(150px);
+    pointer-events: none;
+    z-index: 0;
+    animation: float 15s ease-in-out infinite;
+}
+
+body::before {
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, var(--primary-cyan) 0%, var(--primary-purple) 50%, transparent 70%);
+    top: -400px;
+    left: -200px;
+}
+
+body::after {
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, var(--primary-purple) 0%, var(--primary-pink) 50%, transparent 70%);
+    bottom: -350px;
+    right: -150px;
+    animation-direction: reverse;
+    animation-duration: 18s;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.locked {
+    pointer-events: none;
+    opacity: 0.25;
+    filter: blur(2px);
+}
+
+header {
+    padding: 4rem 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+header h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, #00f0ff 0%, #a855f7 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.03em;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.user-badge {
+    padding: 8px 16px;
+    background: var(--glass-light);
+    border: 1px solid var(--border-medium);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--primary-cyan);
+}
+
+.btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #00f0ff, #a855f7, #ec4899);
+    color: #000;
+    box-shadow: 0 8px 30px var(--glow-cyan);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 50px var(--glow-cyan);
+}
+
+.btn-ghost {
+    background: var(--glass-light);
+    backdrop-filter: blur(20px);
+    color: var(--text-primary);
+    border: 2px solid var(--border-medium);
+}
+
+.btn-ghost:hover {
+    background: var(--glass-hover);
+    border-color: var(--primary-cyan);
+    transform: translateY(-3px);
+}
+
+.search-bar {
+    display: flex;
+    gap: 1rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 300px;
+    padding: 18px 32px;
+    border: 2px solid var(--border-medium);
+    border-radius: 50px;
+    background: var(--glass-light);
+    backdrop-filter: blur(20px);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-cyan);
+    box-shadow: 0 0 40px var(--glow-cyan);
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.filters {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+select {
+    padding: 14px 24px;
+    padding-right: 45px;
+    border: 2px solid var(--border-medium);
+    border-radius: 16px;
+    background: var(--glass-light);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+}
+
+select:hover {
+    border-color: var(--primary-cyan);
+    transform: translateY(-2px);
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+    animation: fadeInUp 0.8s ease-out;
+    margin: 2rem 0;
+}
+
+.tool-card {
+    background: var(--glass-light);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 2rem;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    backdrop-filter: blur(30px);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.tool-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 30px 80px rgba(0, 240, 255, 0.3);
+    border-color: rgba(0, 240, 255, 0.6);
+}
+
+.tool-card h3 {
+    font-size: 1.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #00f0ff, #a855f7, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.tool-meta {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.tool-desc {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 1rem 0;
+    flex-grow: 1;
+}
+
+.tool-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tool-actions button {
+    flex: 1;
+    min-width: 70px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-medium);
+    border-radius: 8px;
+    background: var(--glass-light);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tool-actions button:hover:not(:disabled) {
+    border-color: var(--primary-cyan);
+    background: var(--glass-hover);
+    transform: translateY(-2px);
+}
+
+.tool-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tool-actions button.saved {
+    border-color: var(--primary-cyan);
+    color: var(--primary-cyan);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state h2, .empty-state h3 {
+    font-size: 2rem;
+    background: linear-gradient(135deg, #00f0ff, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(5, 5, 16, 0.95);
+    backdrop-filter: blur(20px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal.show {
+    display: flex !important;
+}
+
+.modal-card {
+    background: var(--bg-modal);
+    padding: 3rem;
+    border-radius: 32px;
+    border: 2px solid var(--border-medium);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-card h3 {
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, #00f0ff, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1.5rem;
+}
+
+.modal-card label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.modal-card input,
+.modal-card textarea {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--border-medium);
+    border-radius: 12px;
+    background: var(--glass-light);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.modal-card input:focus,
+.modal-card textarea:focus {
+    outline: none;
+    border-color: var(--primary-cyan);
+    box-shadow: 0 0 20px var(--glow-cyan);
+}
+
+.modal-card textarea {
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.auth-toggle {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.auth-toggle button {
+    background: none;
+    border: none;
+    color: var(--primary-cyan);
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.9rem;
+    padding: 0;
+    margin-left: 0.3rem;
+}
+
+.auth-toggle button:hover {
+    color: var(--primary-purple);
+}
+
+.stars {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 2rem;
+    margin-top: 0.5rem;
+}
+
+.stars span {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--primary-cyan);
+}
+
+.stars span:hover {
+    transform: scale(1.2);
+}
+
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    background: var(--bg-modal);
+    border: 2px solid var(--border-medium);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-weight: 600;
+    z-index: 3000;
+    animation: slideIn 0.3s ease-out;
+}
+
+.toast.success {
+    border-color: #4ade80;
+    color: #4ade80;
+}
+
+.toast.error {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-30px);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1.5rem;
+    }
+    .results-grid {
+        grid-template-columns: 1fr;
+    }
+    .modal-card {
+        padding: 2rem;
+    }
+    .toast {
+        right: 1rem;
+        left: 1rem;
+    }
+}
+  </style>
+</head> 
+
+<body>
+  <div class="container" id="mainContainer">
+    <header>
+      <div>
+        <h1>AI TOOL RECOMMENDER</h1>
+        <div class="subtitle">Personalized AI tool discovery</div>
+      </div>
+      <div class="header-buttons">
+        <div id="userBadge" style="display:none" class="user-badge"></div>
+        <button id="openAuthBtn" class="btn btn-ghost">Sign In</button>
+        <button id="logoutBtn" class="btn btn-ghost" style="display:none">Logout</button>
+        <button id="viewBookmarks" class="btn btn-ghost">Bookmarks</button>
+      </div>
+    </header>
+
+    <div class="search-section">
+      <form id="searchForm" class="search-bar" autocomplete="off">
+        <input 
+          id="queryInput" 
+          class="search-input" 
+          placeholder="e.g. image generator for posters, summarization API..."
+          maxlength="200"
+        />
+        <button type="submit" class="btn btn-primary" id="searchBtn">Search</button>
+        <button id="deepBtn" type="button" class="btn btn-ghost">Deep Search</button>
+      </form>
+
+      <div class="filters">
+        <select id="costFilter" aria-label="Cost filter">
+          <option value="">Cost: Any</option>
+          <option value="Free">Free</option>
+          <option value="Paid">Paid</option>
+        </select>
+
+        <select id="langFilter" aria-label="Language filter">
+          <option value="">Language: Any</option>
+          <option value="English">English</option>
+          <option value="Multilingual">Multilingual</option>
+        </select>
+
+        <select id="catFilter" aria-label="Category filter">
+          <option value="">Category: Any</option>
+          <option value="NLP">NLP</option>
+          <option value="Vision">Vision</option>
+          <option value="Chatbot">Chatbot</option>
+        </select>
+
+        <select id="topK" aria-label="Results count">
+          <option value="1">Top 1</option>
+          <option value="3">Top 3</option>
+          <option value="5" selected>Top 5</option>
+          <option value="10">Top 10</option>
+        </select>
+
+        <select id="sortSelect" aria-label="Sort by">
+          <option value="score">Sort: Relevance</option>
+          <option value="Rating">Sort: Rating</option>
+          <option value="Popularity">Sort: Popularity</option>
+        </select>
+      </div>
+    </div>
+
+    <main id="results" aria-live="polite">
+      <div class="empty-state" id="emptyState">
+        <h2>Welcome to AI Tool Recommender</h2>
+        <p>Sign in to get personalized recommendations based on your preferences.</p>
+        <p style="margin-top:12px;color:#667eea;font-weight:600">Search to begin discovering AI tools</p>
+      </div>
+    </main>
+
+    <footer>Powered by AI • 2025 • Intelligent Tool Discovery</footer>
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div id="authModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="modal-card">
+      <h3 id="authTitle">Sign In</h3>
+      <form id="authForm">
+        <div id="nameField" style="margin-top:16px; display:none">
+  <label for="nameInput">Name</label>
+  <input 
+    id="nameInput"
+    type="text"
+    placeholder="Your name"
+  />
+</div>
+
+        <div style="margin-top:16px">
+          <label for="emailInput">Email</label>
+          <input 
+            id="emailInput" 
+            type="email" 
+            required 
+            autocomplete="email"
+            placeholder="your@email.com"
+          />
+        </div>
+        <div style="margin-top:16px">
+          <label for="pwInput">Password</label>
+          <input 
+            id="pwInput" 
+            type="password" 
+            required 
+            autocomplete="current-password"
+            placeholder="Enter password"
+            minlength="2"
+          />
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+          <button type="button" id="authCancel" class="btn btn-ghost">Cancel</button>
+          <button type="submit" id="authSubmit" class="btn btn-primary">Sign In</button>
+        </div>
+
+        <div class="auth-toggle">
+          <span id="toggleText">Don't have an account?</span>
+          <button type="button" id="toggleMode">Sign Up</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DETAIL MODAL -->
+  <div id="detailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h3 id="detailTitle">Tool Details</h3>
+        <button id="detailClose" class="btn btn-ghost">Close</button>
+      </div>
+
+      <div>
+        <div id="detailMeta" class="tool-meta"></div>
+        <p id="detailDesc" class="tool-desc"></p>
+
+        <div style="margin-top:20px">
+          <label>Your Rating</label>
+          <div id="stars" class="stars"></div>
+        </div>
+
+        <div style="margin-top:20px">
+          <label for="detailComment">Leave a comment</label>
+          <textarea 
+            id="detailComment" 
+            placeholder="Share your thoughts about this tool..."
+            maxlength="500"
+          ></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+            <button id="detailBookmark" class="btn btn-ghost">Save</button>
+            <button id="sendComment" class="btn btn-primary">Send Comment</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  const API = "http://127.0.0.1:8000";
+
+  let currentUser = null;
+  let currentResults = [];
+  let detailOpenFor = null;
+  let isSignUpMode = false;
+
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- UTIL ----------
+  function safeJSONParse(res) {
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) return res.json();
+    return res.text().then((t) => {
+      try {
+        return JSON.parse(t);
+      } catch {
+        return null;
+      }
+    });
+  }
+
+  function isLogged() {
+    return currentUser && currentUser.id != null;
+  }
+
+  function showToast(msg, type = "info") {
+    const old = document.querySelector(".toast");
+    if (old) old.remove();
+
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function normalizeItem(item) {
+    return {
+      ai_id: item.ai_id ?? item.id,
+      name: item.name ?? item.Name ?? "Unnamed Tool",
+      company: item.company ?? item.Company ?? "N/A",
+      category: item.category ?? item.Category ?? "N/A",
+      languages: item.languages ?? item.Languages ?? "N/A",
+      description:
+        item.description ?? item["Task Description"] ?? "No description available",
+      rating: item.rating ?? 0,
+      popularity: item.popularity ?? 0,
+      score: item.score ?? 0,
+    };
+  }
+
+  // ---------- LOGIN STATE ----------
+  function updateLockState() {
+    const badge = $("userBadge");
+    const logoutBtn = $("logoutBtn");
+    const openAuth = $("openAuthBtn");
+
+    if (!isLogged()) {
+      badge.style.display = "none";
+      logoutBtn.style.display = "none";
+      openAuth.style.display = "block";
+
+      document.querySelectorAll(".requires-auth").forEach((x) => (x.disabled = true));
+    } else {
+      badge.style.display = "block";
+      logoutBtn.style.display = "block";
+      openAuth.style.display = "none";
+
+      badge.textContent = `👤 ${String(currentUser.email).slice(0, 12)}...`;
+
+      document.querySelectorAll(".requires-auth").forEach((x) => (x.disabled = false));
+    }
+  }
+
+  function setAuthMode(signup) {
+    isSignUpMode = signup;
+
+    $("authTitle").textContent = signup ? "Sign Up" : "Sign In";
+    $("authSubmit").textContent = signup ? "Sign Up" : "Sign In";
+    $("toggleText").textContent = signup
+      ? "Already have an account?"
+      : "Don't have an account?";
+    $("toggleMode").textContent = signup ? "Sign In" : "Sign Up";
+
+    $("nameField").style.display = signup ? "block" : "none";
+  }
+
+  // ---------- AUTH ----------
+  $("openAuthBtn").onclick = () => {
+    setAuthMode(false);
+    $("authModal").classList.add("show");
+  };
+
+  $("toggleMode").onclick = () => {
+    setAuthMode(!isSignUpMode);
+  };
+
+  $("logoutBtn").onclick = () => {
+    currentUser = null;
+    updateLockState();
+    $("results").innerHTML = `
+      <div class="empty-state">
+        <h2>Signed Out</h2>
+        <p>Sign in again to continue</p>
+      </div>`;
+    showToast("Signed out", "success");
+  };
+
+  $("authCancel").onclick = () => {
+    $("authModal").classList.remove("show");
+  };
+
+  $("authForm").onsubmit = async (e) => {
+  e.preventDefault();
+
+  const email = $("emailInput").value.trim();
+  const password = $("pwInput").value.trim();
+  const name = $("nameInput").value.trim();
+
+  if (!email || !password) {
+    return showToast("Enter email & password", "error");
+  }
+  if (isSignUpMode && !name) {
+    return showToast("Enter your name", "error");
+  }
+
+  // Correct API routes
+  const endpoint = isSignUpMode
+    ? "/api/auth/signup"
+    : "/api/auth/login";
+
+  const payload = isSignUpMode
+    ? { name, email, password }
+    : { email, password };
+
+  const btn = $("authSubmit");
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = isSignUpMode ? "Creating..." : "Signing in...";
+
+  try {
+    const res = await fetch(`${API}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await safeJSONParse(res);
+
+    if (!res.ok) {
+      throw new Error(data?.detail || "Authentication failed");
+    }
+
+    // Store user
+    currentUser = {
+      id: data.user_id,
+      email: data.email,
+    };
+
+    // Hide modal and reset fields
+    $("authModal").classList.remove("show");
+    $("emailInput").value = "";
+    $("pwInput").value = "";
+    $("nameInput").value = "";
+
+    updateLockState();
+    showToast(isSignUpMode ? "Account created!" : "Signed in!", "success");
+
+  } catch (err) {
+    showToast(err.message || "Auth error", "error");
+
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+};
+
+// Close auth modal on outside click
+$("authModal").onclick = (e) => {
+  if (!e.target.closest(".modal-card")) {
+    $("authModal").classList.remove("show");
+  }
+};
+
+// Close detail modal on outside click
+$("detailModal").onclick = (e) => {
+  if (!e.target.closest(".modal-card")) {
+    $("detailModal").classList.remove("show");
+  }
+};
+
+
+  // ---------- BOOKMARKS ----------
+  $("viewBookmarks").onclick = async () => {
+    if (!isLogged()) return showToast("Please sign in", "error");
+
+    $("results").innerHTML = `<div class="loading">Loading...</div>`;
+
+    try {
+      const res = await fetch(
+        `${API}/api/bookmarks?user_id=${currentUser.id}`
+      );
+      const data = await safeJSONParse(res);
+
+      const list = data?.bookmarks || [];
+
+      if (!list.length) {
+        $("results").innerHTML = `
+          <div class="empty-state">
+            <h3>No Bookmarks</h3>
+          </div>`;
+      } else {
+        renderResults(list.map(normalizeItem));
+      }
+    } catch {
+      showToast("Error loading bookmarks", "error");
+    }
+  };
+
+  // ---------- RENDER ----------
+  function renderResults(list) {
+    currentResults = list;
+
+    if (!list.length) {
+      $("results").innerHTML = `
+        <div class="empty-state">
+          <h3>No Results</h3>
+        </div>`;
+      return;
+    }
+
+    const grid = document.createElement("div");
+    grid.className = "results-grid";
+
+    list.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "tool-card";
+
+      card.innerHTML = `
+        <h3>${item.name}</h3>
+        <div class="tool-meta">${item.company} • ${item.category} • ${item.languages}</div>
+        <p class="tool-desc">${item.description}</p>
+      `;
+
+      const act = document.createElement("div");
+      act.className = "tool-actions";
+
+      const view = document.createElement("button");
+      view.textContent = "View";
+      view.onclick = () => openDetail(item);
+
+      const save = document.createElement("button");
+      save.textContent = "Save";
+      save.classList.add("requires-auth");
+      save.disabled = !isLogged();
+      save.onclick = async () => {
+        await sendFeedback({ ai_id: item.ai_id, bookmark: 1 });
+        save.textContent = "Saved ✓";
+      };
+
+      const like = document.createElement("button");
+      like.textContent = "👍";
+      like.classList.add("requires-auth");
+      like.disabled = !isLogged();
+      like.onclick = async () => {
+        await sendFeedback({ ai_id: item.ai_id, feedback: 1 });
+        like.textContent = "👍 Done";
+      };
+
+      const dislike = document.createElement("button");
+      dislike.textContent = "👎";
+      dislike.classList.add("requires-auth");
+      dislike.disabled = !isLogged();
+      dislike.onclick = async () => {
+        await sendFeedback({ ai_id: item.ai_id, feedback: -1 });
+        dislike.textContent = "👎 Done";
+      };
+
+      act.append(view, save, like, dislike);
+      card.append(act);
+      grid.append(card);
+    });
+
+    $("results").innerHTML = "";
+    $("results").append(grid);
+  }
+
+  // ---------- FEEDBACK ----------
+  async function sendFeedback(payload) {
+    payload.user_id = currentUser.id;
+
+    const res = await fetch(`${API}/api/feedback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await safeJSONParse(res);
+
+    if (!res.ok) throw new Error(data?.detail || "Failed");
+
+    showToast("Saved", "success");
+  }
+
+  // ---------- DETAIL ----------
+  function openDetail(item) {
+    detailOpenFor = item.ai_id;
+
+    $("detailTitle").textContent = item.name;
+    $("detailMeta").textContent = `${item.company} • ${item.category}`;
+    $("detailDesc").textContent = item.description;
+    $("detailComment").value = "";
+
+    const stars = $("stars");
+    stars.innerHTML = "";
+
+    for (let i = 1; i <= 5; i++) {
+      const s = document.createElement("span");
+      s.textContent = "☆";
+      s.dataset.value = i;
+      s.onclick = async () => {
+        await sendFeedback({ ai_id: item.ai_id, rating: i });
+        [...stars.children].forEach((x) => {
+          x.textContent = x.dataset.value <= i ? "★" : "☆";
+        });
+      };
+      stars.append(s);
+    }
+
+    $("detailBookmark").onclick = () =>
+      sendFeedback({ ai_id: item.ai_id, bookmark: 1 });
+
+    $("detailModal").classList.add("show");
+  }
+
+  $("detailClose").onclick = () =>
+    $("detailModal").classList.remove("show");
+
+  $("sendComment").onclick = async () => {
+    const text = $("detailComment").value.trim();
+    if (!text) return showToast("Enter comment", "error");
+
+    await sendFeedback({ ai_id: detailOpenFor, comment: text });
+    $("detailComment").value = "";
+  };
+
+  // ---------- SEARCH ----------
+  $("searchForm").onsubmit = (e) => {
+    e.preventDefault();
+    const q = $("queryInput").value.trim();
+    if (!q) return showToast("Enter query", "error");
+    performSearch("/api/recommend", q);
+  };
+
+  $("deepBtn").onclick = () => {
+    const q = $("queryInput").value.trim();
+    if (!q) return showToast("Enter query", "error");
+    performSearch("/api/deep_search", q);
+  };
+
+  async function performSearch(endpoint, q) {
+    $("results").innerHTML = `<div class="loading">Searching...</div>`;
+
+    try {
+      const filters = {};
+      if ($("costFilter").value) filters.cost = $("costFilter").value;
+      if ($("langFilter").value) filters.languages = $("langFilter").value;
+      if ($("catFilter").value) filters.category = $("catFilter").value;
+
+      const payload = {
+        query: q,
+        top_k: Number($("topK").value),
+        filters,
+        user_id: isLogged() ? currentUser.id : undefined,
+      };
+
+      const res = await fetch(`${API}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await safeJSONParse(res);
+      if (!res.ok) throw new Error(data?.detail || "Search failed");
+
+      const list = data.results || [];
+      renderResults(list.map(normalizeItem));
+      showToast(`Found ${list.length} results`, "success");
+    } catch (err) {
+      showToast(err.message, "error");
+      $("results").innerHTML = `
+        <div class="empty-state"><h3>No Results</h3></div>`;
+    }
+  }
+
+  // ---------- SORT ----------
+  $("sortSelect").onchange = () => {
+    if (!currentResults.length) return;
+
+    const key = $("sortSelect").value;
+
+    currentResults.sort((a, b) => {
+      if (key === "Rating") return b.rating - a.rating;
+      if (key === "Popularity") return b.popularity - a.popularity;
+      return b.score - a.score;
+    });
+
+    renderResults(currentResults);
+  };
+
+  // ---------- INIT ----------
+  updateLockState();
+})();
+</script>
+
+
+</body>
+</html>

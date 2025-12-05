@@ -1,0 +1,25 @@
+# Virtualenv
+Edi-3/
+venv/
+.env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local DB / data you don't want online
+data.db
+*.sqlite
+*.db
+data/raw/
+data/processed/*.numbers
+
+# OS files
+.DS_Store
+backend/.DS_Store
+data/.DS_Store
+models/embeddings.pkl  # it's empty, can ignore
+
+# (Optional) ignore large models if size is an issue
+# models/vector_store.faiss
+# models/embeddings.npy
