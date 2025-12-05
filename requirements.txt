@@ -7,7 +7,9 @@ pandas==2.2.3
 numpy==1.26.4
 
 # Semantic search
-faiss-cpu==1.8.0
+# Semantic search
+faiss-cpu==1.13.1
+
 
 # Optional: For embeddings & LLM parsing
 sentence-transformers==3.2.1
