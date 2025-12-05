@@ -20,6 +20,6 @@ backend/.DS_Store
 data/.DS_Store
 models/embeddings.pkl  # it's empty, can ignore
 
-# (Optional) ignore large models if size is an issue
-# models/vector_store.faiss
-# models/embeddings.npy
+models/*.faiss
+models/*.npy
+models/*.pkl
