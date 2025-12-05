@@ -47,7 +47,19 @@ def load_corpus_dataframe() -> pd.DataFrame:
             df = pd.read_csv(DATA_PATH)
         _df_cache = df.fillna("")
     return _df_cache
-
+def _ensure_models_exist():
+    """
+    If FAISS index or embeddings are missing, build and save them.
+    This runs once on the first request.
+    """
+    missing = []
+    if not os.path.exists(INDEX_PATH):
+        missing.append("FAISS index")
+    if not os.path.exists(EMBEDDINGS_PATH):
+        missing.append("embeddings.npy")
+    if missing:
+        logger.info(f"Missing {', '.join(missing)}; building now...")
+        build_faiss_index()
 def get_embedding_model() -> SentenceTransformer:
     global _model
     if _model is None:
@@ -121,6 +133,7 @@ def semantic_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
 
     Returns list of result dicts with keys matching the dataframe columns plus 'score'.
     """
+    ensure_models_exist()
     df = load_corpus_dataframe()
     model = get_embedding_model()
 
@@ -151,3 +164,5 @@ def semantic_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         row = df.iloc[int(hit["corpus_id"])]
         results.append({**row.to_dict(), "score": float(hit["score"])})
     return results
+
+ 
